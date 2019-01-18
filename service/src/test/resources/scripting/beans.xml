@@ -25,4 +25,20 @@
 
     <bean class="indi.jackie.miracle.spring.bpp.TestBeanFactoryPostProcessor">
     </bean>
+
+    <!-- zk curator -->
+    <bean id="curator" class="org.apache.curator.framework.CuratorFrameworkFactory"
+          factory-method="newClient" init-method="start">
+        <constructor-arg index="0" value="127.0.0.1:2181" />
+        <constructor-arg index="1" value="30000" />
+        <constructor-arg index="2" value="8000" />
+        <constructor-arg index="3">
+            <bean class="org.apache.curator.retry.ExponentialBackoffRetry">
+                <constructor-arg index="0" value="1000" />
+                <constructor-arg index="1" value="3" />
+            </bean>
+        </constructor-arg>
+    </bean>
+
+
 </beans>
