@@ -1,9 +1,9 @@
-package indi.jackie.test.bpp;
+package indi.jackie.miracle.spring.bpp;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
-public class InstantiationTracingBeanPostProcessor implements BeanPostProcessor {
+public class TestBeanPostProcessor implements BeanPostProcessor {
 
     // simply return the instantiated bean as-is
     public Object postProcessBeforeInitialization(Object bean,

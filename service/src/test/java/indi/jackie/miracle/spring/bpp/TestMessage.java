@@ -1,4 +1,4 @@
-package indi.jackie.test.bpp;
+package indi.jackie.miracle.spring.bpp;
 
 /**
  * @author jackie chen

@@ -1,4 +1,4 @@
-package indi.jackie.test.aware;
+package indi.jackie.miracle.spring.aware;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
