@@ -35,8 +35,6 @@ public class DefaultConfigurationCenter implements IConfigurationCenter {
 
     private CuratorFramework curatorClient;
 
-    private PathChildrenCache pathChildrenCache;
-
     private ExecutorService pool = Executors.newFixedThreadPool(2);
 
     public DefaultConfigurationCenter(String connStr) {
@@ -46,35 +44,26 @@ public class DefaultConfigurationCenter implements IConfigurationCenter {
                 .connectionTimeoutMs(8000)
                 .retryPolicy(retryPolicy)
                 .build();
+        //初始化配置中心
         initCuratorClient();
     }
 
+    /**
+     * 初始化配置 map;设置监听器
+     */
     private void initCuratorClient() {
         try {
             curatorClient.start();
+            //若 base 路径不存在,新建 base 路径
             Stat stat = curatorClient.checkExists().forPath(CONFIGURATION_ROOT_PATH);
             if (stat == null) {
                 curatorClient.create().withMode(CreateMode.PERSISTENT).forPath(CONFIGURATION_ROOT_PATH);
             }
-            pathChildrenCache = new PathChildrenCache(curatorClient, CONFIGURATION_ROOT_PATH, true);
-            pathChildrenCache.getListenable().addListener((curator, event) -> {
-                String eventType = event.getType().name();
-                String path = event.getData().getPath();
-                String key = path.substring(path.lastIndexOf("/") + 1);
-                String data = null != event.getData() ? new String(event.getData().getData(), "UTF-8") : "";
-                logger.debug(String.format("eventType:%s,path:%s,data:%s", eventType, path, data));
-                switch (event.getType()) {
-                    case CHILD_ADDED:
-                    case CHILD_UPDATED:
-                        reloadSingleConfigurationMapEntity(key, data);
-                        break;
-                    case CHILD_REMOVED:
-                        removeSingleConfigurationMapEntity(key);
-                        break;
-                }
-            }, pool);
+            //设置监听器
+            PathChildrenCache pathChildrenCache = new PathChildrenCache(curatorClient, CONFIGURATION_ROOT_PATH, true);
+            pathChildrenCache.getListenable().addListener(new DefaultListener(this.configurations), pool);
             pathChildrenCache.start();
-            //初始化属性map
+            //初始化属性 map
             initConfiguration();
         } catch (Exception e) {
             e.printStackTrace();
@@ -86,20 +75,39 @@ public class DefaultConfigurationCenter implements IConfigurationCenter {
      * 初始化属性map
      */
     private void initConfiguration() throws Exception {
-        configurations = getAllConfiguration();
+        Map<String, String> configs = getConfigurationFromRemote();
+        configs.forEach((key, value) -> {
+            this.configurations.put(key, value);
+        });
+        logger.info("init configurations value: {}", configurations);
     }
 
+    /**
+     * 获取配置
+     *
+     * @param key key标识
+     * @return
+     * @throws Exception
+     */
+    public String getConfiguration(String key) throws Exception {
+        if (configurations.containsKey(key)) {
+            return configurations.get(key);
+        } else {
+            logger.info("get configuration fail, item {} not be found", key);
+            return null;
+        }
+    }
+
+    /**
+     * 路径拼接方法
+     *
+     * @param key 子路径
+     * @return
+     */
     private String concatKey(String key) {
         return CONFIGURATION_ROOT_PATH.concat("/").concat(key);
     }
 
-    private void removeSingleConfigurationMapEntity(String key) {
-        configurations.remove(key);
-    }
-
-    private void reloadSingleConfigurationMapEntity(String key, String data) {
-        configurations.put(key, data);
-    }
 
     @Override
     public void addConfiguration(String key, String value) throws Exception {
@@ -119,26 +127,13 @@ public class DefaultConfigurationCenter implements IConfigurationCenter {
 
     @Override
     public void updateConfiguration(String key, String value) throws Exception {
-        if (!checkChildPathExists(key)) {
+        if (checkChildPathExists(key)) {
             curatorClient.setData().forPath(concatKey(key), value.getBytes("UTF-8"));
         }
     }
 
     @Override
-    public String getConfiguration(String key) throws Exception {
-        if (configurations.containsKey(key)) {
-            return configurations.get(key);
-        }
-        if (checkChildPathExists(key)) {
-            return new String(curatorClient.getData().forPath(concatKey(key)), "UTF-8");
-        } else {
-            logger.info("get configuration fail, item {} not be found", key);
-            return null;
-        }
-    }
-
-    @Override
-    public Map<String, String> getAllConfiguration() throws Exception {
+    public Map<String, String> getConfigurationFromRemote() throws Exception {
         Map<String, String> configs = new HashMap<>();
         try {
             List<String> childPaths = curatorClient.getChildren().forPath(CONFIGURATION_ROOT_PATH);
@@ -146,7 +141,7 @@ public class DefaultConfigurationCenter implements IConfigurationCenter {
                 String key;
                 String data;
                 for (String childPath : childPaths) {
-                    key = childPath.substring(childPath.indexOf("/" + 1));
+                    key = childPath.substring(childPath.indexOf("/") + 1);
                     data = new String(curatorClient.getData().forPath(concatKey(key)), "UTF-8");
                     configs.put(key, data);
                 }
@@ -171,5 +166,9 @@ public class DefaultConfigurationCenter implements IConfigurationCenter {
             e.printStackTrace();
         }
         return flag;
+    }
+
+    public Map<String, String> getConfigurations() {
+        return configurations;
     }
 }

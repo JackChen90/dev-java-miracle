@@ -30,17 +30,9 @@ public interface IConfigurationCenter {
     void updateConfiguration(String key, String value) throws Exception;
 
     /**
-     * 获取配置
-     *
-     * @param key
-     * @throws Exception e
-     */
-    String getConfiguration(String key) throws Exception;
-
-    /**
      * 获取所有配置
      *
      * @throws Exception e
      */
-    Map<String, String> getAllConfiguration() throws Exception;
+    Map<String, String> getConfigurationFromRemote() throws Exception;
 }
