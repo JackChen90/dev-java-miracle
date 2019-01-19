@@ -32,24 +32,25 @@ public class Boot {
         configurationCenter.addConfiguration("class2", "class2");
         configurationCenter.addConfiguration("testnode", "yeahyeahyeah");
 
-        logger.info("-----------------------------------------------------");
-
         Thread.sleep(3000);
+
+        logger.info("遍历 configurations -----------------------------------------------------");
         all = configurationCenter.getConfigurations();
         all.forEach((key, value) ->
                 logger.info("key: [{}] value: [{}]", key, value));
-
-        logger.info("-----------------------------------------------------");
+        logger.info("遍历 configurations -----------------------------------------------------");
 
         configurationCenter.updateConfiguration("miracle", "lueluelue");
 
         Thread.sleep(3000);
+
+        logger.info("遍历 configurations -----------------------------------------------------");
         all = configurationCenter.getConfigurations();
         all.forEach((key, value) ->
                 logger.info("key: [{}] value: [{}]", key, value));
+        logger.info("遍历 configurations -----------------------------------------------------");
 
-        logger.info(configurationCenter.getConfiguration("miracle"));
-
+        logger.info("获取 miracle: {}", configurationCenter.getConfiguration("miracle"));
 
         configurationCenter.deleteConfiguration("miracle");
         configurationCenter.deleteConfiguration("class1");
