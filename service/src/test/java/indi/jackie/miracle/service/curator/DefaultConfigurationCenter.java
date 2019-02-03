@@ -4,6 +4,7 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
+import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.data.Stat;
@@ -60,9 +61,13 @@ public class DefaultConfigurationCenter implements IConfigurationCenter {
                 curatorClient.create().withMode(CreateMode.PERSISTENT).forPath(CONFIGURATION_ROOT_PATH);
             }
             //设置监听器
-            PathChildrenCache pathChildrenCache = new PathChildrenCache(curatorClient, CONFIGURATION_ROOT_PATH, true);
-            pathChildrenCache.getListenable().addListener(new DefaultListener(this.configurations), pool);
-            pathChildrenCache.start();
+//            PathChildrenCache pathChildrenCache = new PathChildrenCache(curatorClient, CONFIGURATION_ROOT_PATH, true);
+//            pathChildrenCache.getListenable().addListener(new DefaultListener(this.configurations), pool);
+//            pathChildrenCache.start();
+
+            TreeCache treeCache = new TreeCache(curatorClient, CONFIGURATION_ROOT_PATH);
+            treeCache.getListenable().addListener(new DefaultTreeCacheListener(this.configurations), pool);
+            treeCache.start();
             //初始化属性 map
             initConfiguration();
         } catch (Exception e) {
