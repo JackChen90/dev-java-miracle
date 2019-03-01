@@ -7,6 +7,10 @@ package indi.jackie.miracle.spring.bpp;
  */
 public class TestMessage {
 
+    public TestMessage(){
+        System.out.println("testMessage construct method");
+    }
+
     private String name;
 
     private Integer age;
